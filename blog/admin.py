@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .forms import BlogAdminForm
 from .models import Blog, Category
 
 
@@ -12,6 +13,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Blog)
 class BlogAdmin(admin.ModelAdmin):
+    form = BlogAdminForm
     list_display = ("title", "is_published", "published_at", "created_at")
     list_filter = ("is_published", "categories")
     search_fields = ("title", "slug")

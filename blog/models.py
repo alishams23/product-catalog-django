@@ -25,7 +25,7 @@ class Blog(AuditableModel):
         blank=True,
     )
     excerpt = models.TextField(blank=True)
-    body = models.JSONField(default=dict)
+    body = models.TextField(blank=True, default="")
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

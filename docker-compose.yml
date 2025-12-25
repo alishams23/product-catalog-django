@@ -12,7 +12,7 @@ services:
       - static_data:/app/staticfiles
 
   db:
-    image: postgres:latest
+    image: docker.arvancloud.ir/postgres:latest
     ports:
       - "5432:5432"
     environment:

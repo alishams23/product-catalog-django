@@ -10,18 +10,32 @@ from .models import (
 )
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    root_category = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ("id", "name", "slug", "root_category")
+
+    def get_root_category(self, obj):
+        root = obj.root_category
+        if not root:
+            return None
+        return {"id": root.id, "name": root.name, "slug": root.slug}
+
+
 class RootCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = RootCategory
         fields = ("id", "name", "slug")
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    root_category = RootCategorySerializer(read_only=True)
+class RootCategoryListSerializer(serializers.ModelSerializer):
+    categories = CategorySerializer(many=True, read_only=True)
 
     class Meta:
-        model = Category
-        fields = ("id", "name", "slug", "root_category")
+        model = RootCategory
+        fields = ("id", "name", "slug", "categories")
 
 
 class ProductMediaSerializer(serializers.ModelSerializer):

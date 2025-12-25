@@ -3,8 +3,12 @@ from rest_framework import filters, generics, permissions
 from rest_framework.pagination import PageNumberPagination
 
 from .filters import ProductFilter
-from .models import Product
-from .serializers import ProductDetailSerializer, ProductListSerializer
+from .models import Product, RootCategory
+from .serializers import (
+    ProductDetailSerializer,
+    ProductListSerializer,
+    RootCategoryListSerializer,
+)
 
 
 class ProductListPagination(PageNumberPagination):
@@ -43,3 +47,11 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
             .prefetch_related("categories", "media", "features", "specifications")
             .distinct()
         )
+
+
+class RootCategoryListAPIView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RootCategoryListSerializer
+
+    def get_queryset(self):
+        return RootCategory.objects.prefetch_related("categories").order_by("name")

@@ -1,12 +1,20 @@
 from rest_framework import serializers
 
-from .models import Blog, Category
+from .models import Blog, Category, RootCategory
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ("id", "name", "slug")
+
+
+class RootCategorySerializer(serializers.ModelSerializer):
+    categories = CategorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = RootCategory
+        fields = ("id", "name", "slug", "categories")
 
 
 class BlogListSerializer(serializers.ModelSerializer):

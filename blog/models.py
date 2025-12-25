@@ -4,9 +4,28 @@ from django.db import models
 from common.models import AuditableModel
 
 
+class RootCategory(AuditableModel):
+    name = models.CharField(max_length=120, unique=True)
+    slug = models.SlugField(max_length=140, unique=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "root categories"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Category(AuditableModel):
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True)
+    root_category = models.ForeignKey(
+        RootCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="categories",
+    )
 
     class Meta:
         ordering = ["name"]

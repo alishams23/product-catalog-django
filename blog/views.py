@@ -1,7 +1,11 @@
 from rest_framework import generics, permissions
 
-from .models import Blog
-from .serializers import BlogDetailSerializer, BlogListSerializer
+from .models import Blog, RootCategory
+from .serializers import (
+    BlogDetailSerializer,
+    BlogListSerializer,
+    RootCategorySerializer,
+)
 
 
 class BlogListAPIView(generics.ListAPIView):
@@ -32,3 +36,11 @@ class BlogDetailAPIView(generics.RetrieveAPIView):
             .select_related("author")
             .prefetch_related("categories")
         )
+
+
+class RootCategoryListAPIView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RootCategorySerializer
+
+    def get_queryset(self):
+        return RootCategory.objects.prefetch_related("categories").order_by("name")

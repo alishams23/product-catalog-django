@@ -1,0 +1,29 @@
+name: Docker Compose CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  compose:
+    runs-on: self-hosted
+    env:
+      COMPOSE_PROJECT_NAME: product-catalog-ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and start services
+        run: docker compose -f docker-compose.yml up --build -d
+
+      - name: Show running services
+        run: docker compose -f docker-compose.yml ps
+
+      - name: Tail logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.yml logs --no-color
+
+      - name: Stop and remove services
+        if: always()
+        run: docker compose -f docker-compose.yml down --volumes --remove-orphans

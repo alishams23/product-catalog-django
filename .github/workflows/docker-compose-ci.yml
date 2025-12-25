@@ -37,6 +37,4 @@ jobs:
         if: failure()
         run: docker compose -f docker-compose.yml logs --no-color
 
-      - name: Stop and remove services
-        if: always()
-        run: docker compose -f docker-compose.yml down --volumes --remove-orphans
+      # Intentionally keep services running on the self-hosted runner for testing.

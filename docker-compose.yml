@@ -13,7 +13,7 @@ services:
       - static_raw_data:/app/static
       - media_data:/app/media
 
-  db:
+  postgres:
     image: docker.arvancloud.ir/postgres:latest
     ports:
       - "${POSTGRES_PORT:-5432}:5432"

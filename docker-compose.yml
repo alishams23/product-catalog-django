@@ -10,6 +10,8 @@ services:
       - db
     volumes:
       - static_data:/app/staticfiles
+      - static_raw_data:/app/static
+      - media_data:/app/media
 
   db:
     image: docker.arvancloud.ir/postgres:latest
@@ -30,3 +32,6 @@ services:
 volumes:
   postgres_data:
   static_data:
+  static_raw_data:
+  media_data:
+

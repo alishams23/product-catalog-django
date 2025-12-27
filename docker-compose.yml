@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      - postgres
     volumes:
       - static_data:/app/staticfiles
       - static_raw_data:/app/static

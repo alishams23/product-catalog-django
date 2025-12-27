@@ -1,7 +1,7 @@
 services:
 
 
-  postgres:
+  db:
     image: docker.arvancloud.ir/postgres:latest
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -16,6 +16,7 @@ services:
       - postgres_data:/var/lib/postgresql
     networks:
       - catalog
+    restart: always
 
   web:
     build: .
@@ -25,13 +26,14 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
+      - db
     volumes:
       - static_data:/app/staticfiles
       - static_raw_data:/app/static
       - media_data:/app/media
     networks:
       - catalog
+    restart: always
 
 volumes:
   postgres_data:

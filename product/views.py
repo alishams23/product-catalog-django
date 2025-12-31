@@ -1,10 +1,13 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, generics, permissions
+from rest_framework import filters, generics, permissions, status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.response import Response
 
 from .filters import ProductFilter
 from .models import Product, RootCategory
 from .serializers import (
+    ProductCreateSerializer,
     ProductDetailSerializer,
     ProductListSerializer,
     RootCategoryListSerializer,
@@ -58,6 +61,19 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
             )
             .distinct()
         )
+
+
+class ProductCreateAPIView(generics.CreateAPIView):
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ProductCreateSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        product = serializer.save()
+        output = ProductDetailSerializer(product, context=self.get_serializer_context())
+        return Response(output.data, status=status.HTTP_201_CREATED)
 
 
 class RootCategoryListAPIView(generics.ListAPIView):

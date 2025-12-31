@@ -208,6 +208,73 @@ class ProductFaqItemSerializer(serializers.ModelSerializer):
         return {"question": data.get("question") or "", "answer": data.get("answer") or ""}
 
 
+class ProductMediaCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductMedia
+        fields = (
+            "media_type",
+            "role",
+            "title",
+            "url",
+            "alt_text",
+            "is_primary",
+            "sort_order",
+        )
+
+
+class ProductFeatureCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductFeature
+        fields = ("title", "body", "sort_order")
+
+
+class ProductSpecificationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSpecification
+        fields = ("name", "value", "unit", "sort_order")
+
+
+class ProductNavItemCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductNavItem
+        fields = ("anchor_id", "label", "href", "sort_order")
+
+
+class ProductContentBlockItemCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductContentBlockItem
+        fields = ("label", "value", "sort_order")
+
+
+class ProductContentBlockCreateSerializer(serializers.ModelSerializer):
+    items = ProductContentBlockItemCreateSerializer(many=True, required=False)
+    media = ProductMediaCreateSerializer(required=False)
+
+    class Meta:
+        model = ProductContentBlock
+        fields = ("section", "block_type", "title", "body", "media", "items", "sort_order")
+
+
+class ProductSpecItemCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSpecItem
+        fields = ("name", "value", "unit", "sort_order")
+
+
+class ProductSpecModelCreateSerializer(serializers.ModelSerializer):
+    spec_items = ProductSpecItemCreateSerializer(many=True, required=False)
+
+    class Meta:
+        model = ProductSpecModel
+        fields = ("title", "spec_items", "sort_order")
+
+
+class ProductFaqItemCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductFaqItem
+        fields = ("question", "answer_html", "sort_order")
+
+
 class ProductListSerializer(serializers.ModelSerializer):
     categories = CategorySerializer(many=True, read_only=True)
     primary_image = serializers.SerializerMethodField()
@@ -392,3 +459,113 @@ class ProductDetailSerializer(serializers.Serializer):
             "faqItems": faq_items,
             "href": f"/products/{instance.slug}",
         }
+
+
+class ProductCreateSerializer(serializers.ModelSerializer):
+    categories = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        many=True,
+        required=False,
+    )
+    media = ProductMediaCreateSerializer(many=True, required=False)
+    features = ProductFeatureCreateSerializer(many=True, required=False)
+    specifications = ProductSpecificationCreateSerializer(many=True, required=False)
+    nav_items = ProductNavItemCreateSerializer(many=True, required=False)
+    content_blocks = ProductContentBlockCreateSerializer(many=True, required=False)
+    spec_models = ProductSpecModelCreateSerializer(many=True, required=False)
+    faq_items = ProductFaqItemCreateSerializer(many=True, required=False)
+
+    class Meta:
+        model = Product
+        fields = (
+            "title",
+            "slug",
+            "short_description",
+            "description",
+            "highlights",
+            "applications",
+            "technical_overview",
+            "model_number",
+            "brand",
+            "warranty",
+            "datasheet_url",
+            "brochure_url",
+            "demo_video_url",
+            "price",
+            "highlight",
+            "highlight_html",
+            "summary_html",
+            "hero_title",
+            "hero_tagline",
+            "hero_english",
+            "hero_alt",
+            "hero_video_url",
+            "hero_catalog_href",
+            "hero_catalog_label",
+            "cart_href",
+            "spec_download_href",
+            "meta_title",
+            "meta_description",
+            "is_featured",
+            "status",
+            "published_at",
+            "categories",
+            "media",
+            "features",
+            "specifications",
+            "nav_items",
+            "content_blocks",
+            "spec_models",
+            "faq_items",
+        )
+
+    def create(self, validated_data):
+        categories = validated_data.pop("categories", [])
+        media_list = validated_data.pop("media", [])
+        feature_list = validated_data.pop("features", [])
+        specification_list = validated_data.pop("specifications", [])
+        nav_item_list = validated_data.pop("nav_items", [])
+        content_block_list = validated_data.pop("content_blocks", [])
+        spec_model_list = validated_data.pop("spec_models", [])
+        faq_item_list = validated_data.pop("faq_items", [])
+
+        product = Product.objects.create(**validated_data)
+        if categories:
+            product.categories.set(categories)
+
+        for media_data in media_list:
+            ProductMedia.objects.create(product=product, **media_data)
+
+        for feature_data in feature_list:
+            ProductFeature.objects.create(product=product, **feature_data)
+
+        for specification_data in specification_list:
+            ProductSpecification.objects.create(product=product, **specification_data)
+
+        for nav_item_data in nav_item_list:
+            ProductNavItem.objects.create(product=product, **nav_item_data)
+
+        for block_data in content_block_list:
+            item_list = block_data.pop("items", [])
+            media_data = block_data.pop("media", None)
+            media = None
+            if media_data:
+                media = ProductMedia.objects.create(product=product, **media_data)
+            block = ProductContentBlock.objects.create(
+                product=product,
+                media=media,
+                **block_data,
+            )
+            for item_data in item_list:
+                ProductContentBlockItem.objects.create(block=block, **item_data)
+
+        for spec_model_data in spec_model_list:
+            spec_items = spec_model_data.pop("spec_items", [])
+            spec_model = ProductSpecModel.objects.create(product=product, **spec_model_data)
+            for spec_item_data in spec_items:
+                ProductSpecItem.objects.create(spec_model=spec_model, **spec_item_data)
+
+        for faq_item_data in faq_item_list:
+            ProductFaqItem.objects.create(product=product, **faq_item_data)
+
+        return product

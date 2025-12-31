@@ -38,6 +38,7 @@ class Category(AuditableModel):
 class Blog(AuditableModel):
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True)
+    image = models.ImageField(upload_to="blogs/images/", null=True, blank=True)
     categories = models.ManyToManyField(
         Category,
         related_name="blogs",

@@ -29,6 +29,9 @@ jobs:
           POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
           EOF
 
+      - name: Clean previous stack
+        run: docker compose -f docker-compose.yml down --remove-orphans || true
+
       - name: Build and start services
         run: docker compose -f docker-compose.yml up --build -d
 

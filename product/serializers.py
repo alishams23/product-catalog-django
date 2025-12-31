@@ -62,10 +62,16 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         if obj.media_type == ProductMedia.TYPE_IMAGE and obj.image:
-            return obj.image.url
+            return self._build_absolute_url(obj.image.url)
         if obj.media_type in {ProductMedia.TYPE_VIDEO, ProductMedia.TYPE_DOCUMENT} and obj.file:
-            return obj.file.url
+            return self._build_absolute_url(obj.file.url)
         return None
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
 
 
 class ProductFeatureSerializer(serializers.ModelSerializer):
@@ -112,12 +118,18 @@ class ProductContentBlockSerializer(serializers.ModelSerializer):
             return None
         media = obj.media
         if media.media_type == ProductMedia.TYPE_IMAGE and media.image:
-            url = media.image.url
+            url = self._build_absolute_url(media.image.url)
         elif media.media_type in {ProductMedia.TYPE_VIDEO, ProductMedia.TYPE_DOCUMENT} and media.file:
-            url = media.file.url
+            url = self._build_absolute_url(media.file.url)
         else:
             url = None
         return {"url": url, "alt_text": media.alt_text}
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -339,7 +351,14 @@ class ProductListSerializer(serializers.ModelSerializer):
             )
         if not media:
             return None
-        return {"url": media.image.url if media.image else None, "alt_text": media.alt_text}
+        url = media.image.url if media.image else None
+        return {"url": self._build_absolute_url(url), "alt_text": media.alt_text}
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
 
 
 class ProductDetailSerializer(serializers.Serializer):
@@ -372,14 +391,19 @@ class ProductDetailSerializer(serializers.Serializer):
     faqItems = FaqItemOutputSerializer(many=True)
     href = serializers.CharField()
 
-    def _media_url(self, media):
+    def _media_url(self, media, request):
         if not media:
             return None
         if media.media_type == ProductMedia.TYPE_IMAGE and media.image:
-            return media.image.url
+            return self._build_absolute_url(media.image.url, request)
         if media.media_type in {ProductMedia.TYPE_VIDEO, ProductMedia.TYPE_DOCUMENT} and media.file:
-            return media.file.url
+            return self._build_absolute_url(media.file.url, request)
         return None
+
+    def _build_absolute_url(self, path, request):
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
 
     def _primary_image(self, obj):
         media = next(
@@ -443,18 +467,18 @@ class ProductDetailSerializer(serializers.Serializer):
     def _hero_english(self, obj):
         return obj.hero_english or obj.title
 
-    def _hero_video(self, obj):
+    def _hero_video(self, obj, request):
         if obj.hero_video_url:
-            return obj.hero_video_url.url
+            return self._build_absolute_url(obj.hero_video_url.url, request)
         if obj.demo_video_url:
-            return obj.demo_video_url.url
+            return self._build_absolute_url(obj.demo_video_url.url, request)
         return None
 
-    def _hero_catalog_href(self, obj):
+    def _hero_catalog_href(self, obj, request):
         if obj.hero_catalog_href:
-            return obj.hero_catalog_href.url
+            return self._build_absolute_url(obj.hero_catalog_href.url, request)
         if obj.brochure_url:
-            return obj.brochure_url.url
+            return self._build_absolute_url(obj.brochure_url.url, request)
         return None
 
     def _hero_catalog_label(self, obj):
@@ -464,27 +488,28 @@ class ProductDetailSerializer(serializers.Serializer):
             return "Catalog"
         return None
 
-    def _spec_download_href(self, obj):
+    def _spec_download_href(self, obj, request):
         if obj.spec_download_href:
-            return obj.spec_download_href.url
+            return self._build_absolute_url(obj.spec_download_href.url, request)
         if obj.datasheet_url:
-            return obj.datasheet_url.url
+            return self._build_absolute_url(obj.datasheet_url.url, request)
         return None
 
     def _blocks_by_section(self, obj, section):
         blocks = [block for block in obj.content_blocks.all() if block.section == section]
         return ProductContentBlockSerializer(blocks, many=True).data
 
-    def _video_gallery(self, obj):
+    def _video_gallery(self, obj, request):
         videos = [
             item
             for item in obj.media.all()
             if item.media_type == ProductMedia.TYPE_VIDEO
             and item.role == ProductMedia.ROLE_GALLERY
         ]
-        return [self._media_url(item) for item in videos if self._media_url(item)]
+        return [self._media_url(item, request) for item in videos if self._media_url(item, request)]
 
     def to_representation(self, instance):
+        request = self.context.get("request")
         hero_media = self._hero_image(instance)
         image_media = self._primary_image(instance)
         nav_items = ProductNavItemSerializer(instance.nav_items.all(), many=True).data
@@ -494,7 +519,7 @@ class ProductDetailSerializer(serializers.Serializer):
         return {
             "slug": instance.slug,
             "title": instance.title,
-            "image": self._media_url(image_media),
+            "image": self._media_url(image_media, request),
             "price": instance.price,
             "description": instance.description or None,
             "highlight": self._highlight(instance),
@@ -503,21 +528,21 @@ class ProductDetailSerializer(serializers.Serializer):
             "category": self._category_name(instance),
             "categoryHref": self._category_href(instance),
             "cartHref": instance.cart_href or None,
-            "heroImage": self._media_url(hero_media),
+            "heroImage": self._media_url(hero_media, request),
             "heroAlt": self._hero_alt(instance, hero_media),
             "heroEnglish": self._hero_english(instance),
             "heroTitle": self._hero_title(instance),
             "heroTagline": instance.hero_tagline or None,
-            "heroVideo": self._hero_video(instance),
-            "heroCatalogHref": self._hero_catalog_href(instance),
+            "heroVideo": self._hero_video(instance, request),
+            "heroCatalogHref": self._hero_catalog_href(instance, request),
             "heroCatalogLabel": self._hero_catalog_label(instance),
             "navItems": nav_items,
             "moarefiBlocks": self._blocks_by_section(instance, ProductContentBlock.SECTION_MOAREFI),
             "moshakhasatBlocks": self._blocks_by_section(instance, ProductContentBlock.SECTION_MOSHAKHASAT),
             "videoBlocks": self._blocks_by_section(instance, ProductContentBlock.SECTION_VIDEO),
             "specModels": spec_models,
-            "specDownloadHref": self._spec_download_href(instance),
-            "videoGallery": self._video_gallery(instance),
+            "specDownloadHref": self._spec_download_href(instance, request),
+            "videoGallery": self._video_gallery(instance, request),
             "faqItems": faq_items,
             "href": f"/products/{instance.slug}",
         }

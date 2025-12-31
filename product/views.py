@@ -44,7 +44,17 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
     def get_queryset(self):
         return (
             Product.objects.filter(status=Product.STATUS_PUBLISHED)
-            .prefetch_related("categories", "media", "features", "specifications")
+            .prefetch_related(
+                "categories",
+                "media",
+                "features",
+                "specifications",
+                "nav_items",
+                "content_blocks__items",
+                "content_blocks__media",
+                "spec_models__spec_items",
+                "faq_items",
+            )
             .distinct()
         )
 

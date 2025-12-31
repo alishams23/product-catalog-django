@@ -37,6 +37,7 @@ class ProductListAPIView(generics.ListAPIView):
 
 
 class ProductDetailAPIView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
     permission_classes = [permissions.AllowAny]
     serializer_class = ProductDetailSerializer
     lookup_field = "slug"

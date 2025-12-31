@@ -135,6 +135,45 @@ class ProductContentBlockSerializer(serializers.ModelSerializer):
         return content
 
 
+class ProductNavItemOutputSerializer(serializers.Serializer):
+    id = serializers.CharField(allow_blank=True, required=False)
+    label = serializers.CharField(allow_blank=True, required=False)
+
+
+class ContentBlockOutputSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(
+        choices=(
+            ProductContentBlock.TYPE_HEADING,
+            ProductContentBlock.TYPE_PARAGRAPH,
+            ProductContentBlock.TYPE_LIST,
+            ProductContentBlock.TYPE_IMAGE,
+            ProductContentBlock.TYPE_VIDEO,
+        )
+    )
+    text = serializers.CharField(allow_blank=True, required=False)
+    items = serializers.ListField(
+        child=serializers.CharField(allow_blank=True),
+        required=False,
+    )
+    src = serializers.CharField(allow_blank=True, required=False)
+    alt = serializers.CharField(allow_blank=True, required=False)
+
+
+class SpecItemOutputSerializer(serializers.Serializer):
+    label = serializers.CharField(allow_blank=True, required=False)
+    value = serializers.CharField(allow_blank=True, required=False)
+
+
+class SpecModelOutputSerializer(serializers.Serializer):
+    name = serializers.CharField(allow_blank=True, required=False)
+    specs = SpecItemOutputSerializer(many=True)
+
+
+class FaqItemOutputSerializer(serializers.Serializer):
+    question = serializers.CharField(allow_blank=True, required=False)
+    answer = serializers.CharField(allow_blank=True, required=False)
+
+
 class ProductSpecItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductSpecItem
@@ -195,10 +234,35 @@ class ProductListSerializer(serializers.ModelSerializer):
         return {"url": media.url, "alt_text": media.alt_text}
 
 
-class ProductDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = ("slug",)
+class ProductDetailSerializer(serializers.Serializer):
+    slug = serializers.CharField()
+    title = serializers.CharField()
+    image = serializers.CharField(allow_null=True, required=False)
+    price = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    description = serializers.CharField(allow_blank=True, required=False)
+    highlight = serializers.CharField(allow_blank=True, required=False)
+    highlightHtml = serializers.CharField(allow_blank=True, required=False)
+    summaryHtml = serializers.CharField(allow_blank=True, required=False)
+    category = serializers.CharField(allow_blank=True, required=False)
+    categoryHref = serializers.CharField(allow_blank=True, required=False)
+    cartHref = serializers.CharField(allow_blank=True, required=False)
+    heroImage = serializers.CharField(allow_null=True, required=False)
+    heroAlt = serializers.CharField(allow_blank=True, required=False)
+    heroEnglish = serializers.CharField(allow_blank=True, required=False)
+    heroTitle = serializers.CharField(allow_blank=True, required=False)
+    heroTagline = serializers.CharField(allow_blank=True, required=False)
+    heroVideo = serializers.CharField(allow_blank=True, required=False)
+    heroCatalogHref = serializers.CharField(allow_blank=True, required=False)
+    heroCatalogLabel = serializers.CharField(allow_blank=True, required=False)
+    navItems = ProductNavItemOutputSerializer(many=True)
+    moarefiBlocks = ContentBlockOutputSerializer(many=True)
+    moshakhasatBlocks = ContentBlockOutputSerializer(many=True)
+    videoBlocks = ContentBlockOutputSerializer(many=True)
+    specModels = SpecModelOutputSerializer(many=True)
+    specDownloadHref = serializers.CharField(allow_blank=True, required=False)
+    videoGallery = serializers.ListField(child=serializers.CharField())
+    faqItems = FaqItemOutputSerializer(many=True)
+    href = serializers.CharField()
 
     def _primary_image(self, obj):
         media = next(

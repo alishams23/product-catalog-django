@@ -34,7 +34,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductMediaInline(admin.TabularInline):
     model = ProductMedia
     extra = 0
-    fields = ("media_type", "role", "title", "url", "alt_text", "is_primary", "sort_order")
+    fields = ("media_type", "role", "title", "image", "file", "alt_text", "is_primary", "sort_order")
     ordering = ("sort_order", "id")
 
 
@@ -120,7 +120,7 @@ class ProductAdmin(admin.ModelAdmin):
 class ProductMediaAdmin(admin.ModelAdmin):
     list_display = ("product", "media_type", "role", "title", "is_primary", "sort_order")
     list_filter = ("media_type", "role", "is_primary")
-    search_fields = ("title", "alt_text", "url", "product__title")
+    search_fields = ("title", "alt_text", "product__title")
     ordering = ("product", "sort_order", "id")
 
 

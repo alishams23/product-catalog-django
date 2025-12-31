@@ -45,6 +45,8 @@ class RootCategoryListSerializer(serializers.ModelSerializer):
 
 
 class ProductMediaSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductMedia
         fields = (
@@ -57,6 +59,13 @@ class ProductMediaSerializer(serializers.ModelSerializer):
             "is_primary",
             "sort_order",
         )
+
+    def get_url(self, obj):
+        if obj.media_type == ProductMedia.TYPE_IMAGE and obj.image:
+            return obj.image.url
+        if obj.media_type in {ProductMedia.TYPE_VIDEO, ProductMedia.TYPE_DOCUMENT} and obj.file:
+            return obj.file.url
+        return None
 
 
 class ProductFeatureSerializer(serializers.ModelSerializer):
@@ -101,7 +110,14 @@ class ProductContentBlockSerializer(serializers.ModelSerializer):
     def get_media(self, obj):
         if not obj.media:
             return None
-        return {"url": obj.media.url, "alt_text": obj.media.alt_text}
+        media = obj.media
+        if media.media_type == ProductMedia.TYPE_IMAGE and media.image:
+            url = media.image.url
+        elif media.media_type in {ProductMedia.TYPE_VIDEO, ProductMedia.TYPE_DOCUMENT} and media.file:
+            url = media.file.url
+        else:
+            url = None
+        return {"url": url, "alt_text": media.alt_text}
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -215,11 +231,22 @@ class ProductMediaCreateSerializer(serializers.ModelSerializer):
             "media_type",
             "role",
             "title",
-            "url",
+            "image",
+            "file",
             "alt_text",
             "is_primary",
             "sort_order",
         )
+
+    def validate(self, attrs):
+        media_type = attrs.get("media_type")
+        image = attrs.get("image")
+        file = attrs.get("file")
+        if media_type == ProductMedia.TYPE_IMAGE and not image:
+            raise serializers.ValidationError("image is required for image media.")
+        if media_type in {ProductMedia.TYPE_VIDEO, ProductMedia.TYPE_DOCUMENT} and not file:
+            raise serializers.ValidationError("file is required for video/document media.")
+        return attrs
 
 
 class ProductFeatureCreateSerializer(serializers.ModelSerializer):
@@ -293,12 +320,26 @@ class ProductListSerializer(serializers.ModelSerializer):
         )
 
     def get_primary_image(self, obj):
-        media = next((item for item in obj.media.all() if item.is_primary), None)
+        media = next(
+            (
+                item
+                for item in obj.media.all()
+                if item.media_type == ProductMedia.TYPE_IMAGE and item.is_primary
+            ),
+            None,
+        )
         if media is None:
-            media = obj.media.first()
+            media = next(
+                (
+                    item
+                    for item in obj.media.all()
+                    if item.media_type == ProductMedia.TYPE_IMAGE
+                ),
+                None,
+            )
         if not media:
             return None
-        return {"url": media.url, "alt_text": media.alt_text}
+        return {"url": media.image.url if media.image else None, "alt_text": media.alt_text}
 
 
 class ProductDetailSerializer(serializers.Serializer):
@@ -330,6 +371,15 @@ class ProductDetailSerializer(serializers.Serializer):
     videoGallery = serializers.ListField(child=serializers.CharField())
     faqItems = FaqItemOutputSerializer(many=True)
     href = serializers.CharField()
+
+    def _media_url(self, media):
+        if not media:
+            return None
+        if media.media_type == ProductMedia.TYPE_IMAGE and media.image:
+            return media.image.url
+        if media.media_type in {ProductMedia.TYPE_VIDEO, ProductMedia.TYPE_DOCUMENT} and media.file:
+            return media.file.url
+        return None
 
     def _primary_image(self, obj):
         media = next(
@@ -394,10 +444,18 @@ class ProductDetailSerializer(serializers.Serializer):
         return obj.hero_english or obj.title
 
     def _hero_video(self, obj):
-        return obj.hero_video_url or obj.demo_video_url or None
+        if obj.hero_video_url:
+            return obj.hero_video_url.url
+        if obj.demo_video_url:
+            return obj.demo_video_url.url
+        return None
 
     def _hero_catalog_href(self, obj):
-        return obj.hero_catalog_href or obj.brochure_url or None
+        if obj.hero_catalog_href:
+            return obj.hero_catalog_href.url
+        if obj.brochure_url:
+            return obj.brochure_url.url
+        return None
 
     def _hero_catalog_label(self, obj):
         if obj.hero_catalog_label:
@@ -407,7 +465,11 @@ class ProductDetailSerializer(serializers.Serializer):
         return None
 
     def _spec_download_href(self, obj):
-        return obj.spec_download_href or obj.datasheet_url or None
+        if obj.spec_download_href:
+            return obj.spec_download_href.url
+        if obj.datasheet_url:
+            return obj.datasheet_url.url
+        return None
 
     def _blocks_by_section(self, obj, section):
         blocks = [block for block in obj.content_blocks.all() if block.section == section]
@@ -420,7 +482,7 @@ class ProductDetailSerializer(serializers.Serializer):
             if item.media_type == ProductMedia.TYPE_VIDEO
             and item.role == ProductMedia.ROLE_GALLERY
         ]
-        return [item.url for item in videos]
+        return [self._media_url(item) for item in videos if self._media_url(item)]
 
     def to_representation(self, instance):
         hero_media = self._hero_image(instance)
@@ -432,7 +494,7 @@ class ProductDetailSerializer(serializers.Serializer):
         return {
             "slug": instance.slug,
             "title": instance.title,
-            "image": image_media.url if image_media else None,
+            "image": self._media_url(image_media),
             "price": instance.price,
             "description": instance.description or None,
             "highlight": self._highlight(instance),
@@ -441,7 +503,7 @@ class ProductDetailSerializer(serializers.Serializer):
             "category": self._category_name(instance),
             "categoryHref": self._category_href(instance),
             "cartHref": instance.cart_href or None,
-            "heroImage": hero_media.url if hero_media else None,
+            "heroImage": self._media_url(hero_media),
             "heroAlt": self._hero_alt(instance, hero_media),
             "heroEnglish": self._hero_english(instance),
             "heroTitle": self._hero_title(instance),

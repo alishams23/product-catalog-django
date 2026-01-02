@@ -18,6 +18,9 @@ class RootCategory(AuditableModel):
 class Category(AuditableModel):
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True)
+    image = models.ImageField(upload_to="products/categories/", null=True, blank=True)
+    short_description = models.TextField(blank=True, default="")
+    description = models.TextField(blank=True, default="")
     root_category = models.ForeignKey(
         RootCategory,
         on_delete=models.SET_NULL,

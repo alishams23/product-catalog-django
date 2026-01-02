@@ -6,8 +6,10 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from .filters import ProductFilter
-from .models import Product, RootCategory
+from .models import Category, Product, RootCategory
 from .serializers import (
+    CategoryDetailSerializer,
+    CategoryListSerializer,
     ProductCreateSerializer,
     ProductDetailSerializer,
     ProductListSerializer,
@@ -16,6 +18,12 @@ from .serializers import (
 
 
 class ProductListPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = "page_size"
+    max_page_size = 60
+
+
+class CategoryListPagination(PageNumberPagination):
     page_size = 12
     page_size_query_param = "page_size"
     max_page_size = 60
@@ -76,6 +84,24 @@ class ProductCreateAPIView(generics.CreateAPIView):
         product = serializer.save()
         output = ProductDetailSerializer(product, context=self.get_serializer_context())
         return Response(output.data, status=status.HTTP_201_CREATED)
+
+
+class CategoryListAPIView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = CategoryListSerializer
+    pagination_class = CategoryListPagination
+
+    def get_queryset(self):
+        return Category.objects.select_related("root_category").order_by("name")
+
+
+class CategoryDetailAPIView(generics.RetrieveAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = CategoryDetailSerializer
+    lookup_field = "slug"
+
+    def get_queryset(self):
+        return Category.objects.select_related("root_category")
 
 
 class RootCategoryListAPIView(generics.ListAPIView):

@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .forms import CategoryAdminForm
 from .models import (
     Category,
     Product,
@@ -25,6 +26,7 @@ class RootCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
+    form = CategoryAdminForm
     list_display = ("name", "slug", "root_category", "created_at", "updated_at")
     list_filter = ("root_category",)
     search_fields = ("name", "slug", "root_category__name")

@@ -5,6 +5,7 @@ from .models import Product
 
 class ProductFilter(django_filters.FilterSet):
     category = django_filters.CharFilter(field_name="categories__slug", lookup_expr="iexact")
+    category_id = django_filters.NumberFilter(field_name="categories__id")
     root_category = django_filters.CharFilter(
         field_name="categories__root_category__slug",
         lookup_expr="iexact",
@@ -13,4 +14,4 @@ class ProductFilter(django_filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = ("category", "root_category", "is_featured")
+        fields = ("category", "category_id", "root_category", "is_featured")

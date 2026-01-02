@@ -30,6 +30,46 @@ class CategorySerializer(serializers.ModelSerializer):
         return {"id": root.id, "name": root.name, "slug": root.slug}
 
 
+class CategoryListSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source="name")
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ("title", "image")
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        return self._build_absolute_url(obj.image.url)
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
+
+
+class CategoryDetailSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source="name")
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ("id", "title", "slug", "image", "short_description", "description")
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        return self._build_absolute_url(obj.image.url)
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
+
+
 class RootCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = RootCategory

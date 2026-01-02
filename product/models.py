@@ -44,46 +44,85 @@ class Product(AuditableModel):
         (STATUS_ARCHIVED, "Archived"),
     ]
 
-    title = models.CharField(max_length=220)
-    slug = models.SlugField(max_length=240, unique=True)
+    title = models.CharField(max_length=220, help_text="Public product name.")
+    slug = models.SlugField(max_length=240, unique=True, help_text="Used in product detail URL.")
     categories = models.ManyToManyField(
         Category,
         related_name="products",
         blank=True,
+        help_text="First category is used for category/categoryHref in the API.",
     )
-    short_description = models.TextField(blank=True)
-    description = models.TextField(blank=True, default="")
-    highlights = models.TextField(blank=True)
-    applications = models.TextField(blank=True)
-    technical_overview = models.TextField(blank=True)
-    model_number = models.CharField(max_length=120, blank=True)
-    brand = models.CharField(max_length=120, blank=True)
-    warranty = models.CharField(max_length=120, blank=True)
-    datasheet_url = models.FileField(upload_to="products/docs/", blank=True)
-    brochure_url = models.FileField(upload_to="products/docs/", blank=True)
-    demo_video_url = models.FileField(upload_to="products/videos/", blank=True)
-    price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    highlight = models.CharField(max_length=240, blank=True)
-    highlight_html = models.TextField(blank=True)
-    summary_html = models.TextField(blank=True)
-    hero_title = models.CharField(max_length=220, blank=True)
-    hero_tagline = models.CharField(max_length=240, blank=True)
-    hero_english = models.CharField(max_length=240, blank=True)
-    hero_alt = models.CharField(max_length=200, blank=True)
-    hero_video_url = models.FileField(upload_to="products/videos/", blank=True)
-    hero_catalog_href = models.FileField(upload_to="products/docs/", blank=True)
-    hero_catalog_label = models.CharField(max_length=200, blank=True)
-    cart_href = models.URLField(blank=True)
-    spec_download_href = models.FileField(upload_to="products/docs/", blank=True)
-    meta_title = models.CharField(max_length=200, blank=True)
-    meta_description = models.TextField(blank=True)
-    is_featured = models.BooleanField(default=False)
+    short_description = models.TextField(blank=True, help_text="Fallback for summaryHtml.")
+    description = models.TextField(blank=True, default="", help_text="Full description content.")
+    highlights = models.TextField(blank=True, help_text="Fallback for highlightHtml.")
+    applications = models.TextField(blank=True, help_text="Legacy moarefi content.")
+    technical_overview = models.TextField(blank=True, help_text="Legacy moshakhasat content.")
+    model_number = models.CharField(max_length=120, blank=True, help_text="Internal model number.")
+    brand = models.CharField(max_length=120, blank=True, help_text="Brand/manufacturer.")
+    warranty = models.CharField(max_length=120, blank=True, help_text="Warranty label.")
+    datasheet_url = models.FileField(
+        upload_to="products/docs/",
+        blank=True,
+        help_text="Fallback for specDownloadHref.",
+    )
+    brochure_url = models.FileField(
+        upload_to="products/docs/",
+        blank=True,
+        help_text="Fallback for heroCatalogHref.",
+    )
+    demo_video_url = models.FileField(
+        upload_to="products/videos/",
+        blank=True,
+        help_text="Fallback for heroVideo.",
+    )
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Displayed price.",
+    )
+    highlight = models.CharField(max_length=240, blank=True, help_text="Short highlight text.")
+    highlight_html = models.TextField(blank=True, help_text="Rich highlight content.")
+    summary_html = models.TextField(blank=True, help_text="Rich summary content.")
+    hero_title = models.CharField(max_length=220, blank=True, help_text="Hero title text.")
+    hero_tagline = models.CharField(max_length=240, blank=True, help_text="Hero tagline text.")
+    hero_english = models.CharField(max_length=240, blank=True, help_text="Hero English text.")
+    hero_alt = models.CharField(max_length=200, blank=True, help_text="Hero image alt text.")
+    hero_video_url = models.FileField(
+        upload_to="products/videos/",
+        blank=True,
+        help_text="Hero video file.",
+    )
+    hero_catalog_href = models.FileField(
+        upload_to="products/docs/",
+        blank=True,
+        help_text="Hero catalog PDF.",
+    )
+    hero_catalog_label = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Label for the hero catalog link.",
+    )
+    cart_href = models.URLField(blank=True, help_text="Add-to-cart URL.")
+    spec_download_href = models.FileField(
+        upload_to="products/docs/",
+        blank=True,
+        help_text="Primary spec download file.",
+    )
+    meta_title = models.CharField(max_length=200, blank=True, help_text="SEO title.")
+    meta_description = models.TextField(blank=True, help_text="SEO description.")
+    is_featured = models.BooleanField(default=False, help_text="Highlights product in lists.")
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default=STATUS_DRAFT,
     )
-    published_at = models.DateTimeField(null=True, blank=True)
+    published_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Controls ordering and publish time.",
+    )
 
     class Meta:
         ordering = ["-published_at", "-created_at"]
@@ -123,18 +162,33 @@ class ProductMedia(AuditableModel):
         max_length=20,
         choices=TYPE_CHOICES,
         default=TYPE_IMAGE,
+        help_text="Image, video, or document.",
     )
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
         blank=True,
+        help_text="Hero vs gallery vs document.",
     )
-    title = models.CharField(max_length=200, blank=True)
-    image = models.ImageField(upload_to="products/media/images/", null=True, blank=True)
-    file = models.FileField(upload_to="products/media/files/", null=True, blank=True)
-    alt_text = models.CharField(max_length=200, blank=True)
-    is_primary = models.BooleanField(default=False)
-    sort_order = models.PositiveIntegerField(default=0)
+    title = models.CharField(max_length=200, blank=True, help_text="Optional display title.")
+    image = models.ImageField(
+        upload_to="products/media/images/",
+        null=True,
+        blank=True,
+        help_text="Required when media_type=image.",
+    )
+    file = models.FileField(
+        upload_to="products/media/files/",
+        null=True,
+        blank=True,
+        help_text="Required when media_type=video/document.",
+    )
+    alt_text = models.CharField(max_length=200, blank=True, help_text="Alt text for image/video.")
+    is_primary = models.BooleanField(
+        default=False,
+        help_text="Used for list thumbnail when media_type=image.",
+    )
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -153,9 +207,9 @@ class ProductFeature(AuditableModel):
         on_delete=models.CASCADE,
         related_name="features",
     )
-    title = models.CharField(max_length=200)
-    body = models.TextField(blank=True)
-    sort_order = models.PositiveIntegerField(default=0)
+    title = models.CharField(max_length=200, help_text="Feature title.")
+    body = models.TextField(blank=True, help_text="Feature body text.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -170,10 +224,10 @@ class ProductSpecification(AuditableModel):
         on_delete=models.CASCADE,
         related_name="specifications",
     )
-    name = models.CharField(max_length=200)
-    value = models.CharField(max_length=300)
-    unit = models.CharField(max_length=50, blank=True)
-    sort_order = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=200, help_text="Specification name.")
+    value = models.CharField(max_length=300, help_text="Specification value.")
+    unit = models.CharField(max_length=50, blank=True, help_text="Optional unit.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -188,10 +242,14 @@ class ProductNavItem(AuditableModel):
         on_delete=models.CASCADE,
         related_name="nav_items",
     )
-    anchor_id = models.CharField(max_length=120, blank=True)
-    label = models.CharField(max_length=120)
-    href = models.URLField(blank=True)
-    sort_order = models.PositiveIntegerField(default=0)
+    anchor_id = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text="Anchor id used by navItems.",
+    )
+    label = models.CharField(max_length=120, help_text="Visible nav label.")
+    href = models.URLField(blank=True, help_text="Optional anchor href like #intro.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -227,18 +285,27 @@ class ProductContentBlock(AuditableModel):
         on_delete=models.CASCADE,
         related_name="content_blocks",
     )
-    section = models.CharField(max_length=20, choices=SECTION_CHOICES)
-    block_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    title = models.CharField(max_length=200, blank=True)
-    body = models.TextField(blank=True)
+    section = models.CharField(
+        max_length=20,
+        choices=SECTION_CHOICES,
+        help_text="Which section this block belongs to.",
+    )
+    block_type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        help_text="Rendered block type.",
+    )
+    title = models.CharField(max_length=200, blank=True, help_text="Used by heading blocks.")
+    body = models.TextField(blank=True, help_text="Paragraph or raw text content.")
     media = models.ForeignKey(
         ProductMedia,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="content_blocks",
+        help_text="Pick media for image/video blocks.",
     )
-    sort_order = models.PositiveIntegerField(default=0)
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -256,9 +323,9 @@ class ProductContentBlockItem(AuditableModel):
         on_delete=models.CASCADE,
         related_name="items",
     )
-    label = models.CharField(max_length=200, blank=True)
-    value = models.CharField(max_length=300, blank=True)
-    sort_order = models.PositiveIntegerField(default=0)
+    label = models.CharField(max_length=200, blank=True, help_text="List item label.")
+    value = models.CharField(max_length=300, blank=True, help_text="List item value.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -273,8 +340,8 @@ class ProductSpecModel(AuditableModel):
         on_delete=models.CASCADE,
         related_name="spec_models",
     )
-    title = models.CharField(max_length=200)
-    sort_order = models.PositiveIntegerField(default=0)
+    title = models.CharField(max_length=200, help_text="Spec model title.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -289,10 +356,10 @@ class ProductSpecItem(AuditableModel):
         on_delete=models.CASCADE,
         related_name="spec_items",
     )
-    name = models.CharField(max_length=200)
-    value = models.CharField(max_length=300)
-    unit = models.CharField(max_length=50, blank=True)
-    sort_order = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=200, help_text="Spec name.")
+    value = models.CharField(max_length=300, help_text="Spec value.")
+    unit = models.CharField(max_length=50, blank=True, help_text="Optional unit.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -307,9 +374,9 @@ class ProductFaqItem(AuditableModel):
         on_delete=models.CASCADE,
         related_name="faq_items",
     )
-    question = models.CharField(max_length=240)
-    answer_html = models.TextField(blank=True)
-    sort_order = models.PositiveIntegerField(default=0)
+    question = models.CharField(max_length=240, help_text="FAQ question.")
+    answer_html = models.TextField(blank=True, help_text="FAQ answer HTML/text.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]

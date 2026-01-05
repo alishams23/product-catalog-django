@@ -2,7 +2,7 @@ services:
 
 
   postgres:
-    image: docker.arvancloud.ir/postgres:latest
+    image: docker.m.daocloud.io/library/postgres:latest
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

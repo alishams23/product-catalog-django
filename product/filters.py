@@ -10,8 +10,6 @@ class ProductFilter(django_filters.FilterSet):
         field_name="categories__root_category__slug",
         lookup_expr="iexact",
     )
-    is_featured = django_filters.BooleanFilter()
-
     class Meta:
         model = Product
-        fields = ("category", "category_id", "root_category", "is_featured")
+        fields = ("category", "category_id", "root_category")

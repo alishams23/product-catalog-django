@@ -35,15 +35,15 @@ class ProductListAPIView(generics.ListAPIView):
     pagination_class = ProductListPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
-    search_fields = ("title", "short_description", "description", "brand", "model_number")
-    ordering_fields = ("published_at", "created_at", "title")
-    ordering = ("-published_at", "-created_at")
+    search_fields = ("title", "short_description", "description")
+    ordering_fields = ("created_at", "title")
+    ordering = ("-created_at",)
 
     def get_queryset(self):
         return (
-            Product.objects.filter(status=Product.STATUS_PUBLISHED)
+            Product.objects.all()
             .prefetch_related("categories", "media")
-            .order_by("-published_at", "-created_at")
+            .order_by("-created_at")
             .distinct()
         )
 
@@ -56,12 +56,10 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return (
-            Product.objects.filter(status=Product.STATUS_PUBLISHED)
+            Product.objects.all()
             .prefetch_related(
                 "categories",
                 "media",
-                "features",
-                "specifications",
                 "nav_items",
                 "content_blocks__items",
                 "content_blocks__media",

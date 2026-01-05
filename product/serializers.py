@@ -6,12 +6,10 @@ from .models import (
     ProductContentBlock,
     ProductContentBlockItem,
     ProductFaqItem,
-    ProductFeature,
     ProductMedia,
     ProductNavItem,
     ProductSpecItem,
     ProductSpecModel,
-    ProductSpecification,
     RootCategory,
 )
 
@@ -112,18 +110,6 @@ class ProductMediaSerializer(serializers.ModelSerializer):
         if request and path:
             return request.build_absolute_uri(path)
         return path
-
-
-class ProductFeatureSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductFeature
-        fields = ("id", "title", "body", "sort_order")
-
-
-class ProductSpecificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductSpecification
-        fields = ("id", "name", "value", "unit", "sort_order")
 
 
 class ProductNavItemSerializer(serializers.ModelSerializer):
@@ -301,18 +287,6 @@ class ProductMediaCreateSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class ProductFeatureCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductFeature
-        fields = ("title", "body", "sort_order")
-
-
-class ProductSpecificationCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductSpecification
-        fields = ("name", "value", "unit", "sort_order")
-
-
 class ProductNavItemCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductNavItem
@@ -367,8 +341,6 @@ class ProductListSerializer(serializers.ModelSerializer):
             "short_description",
             "primary_image",
             "categories",
-            "is_featured",
-            "published_at",
         )
 
     def get_primary_image(self, obj):
@@ -595,8 +567,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         required=False,
     )
     media = ProductMediaCreateSerializer(many=True, required=False)
-    features = ProductFeatureCreateSerializer(many=True, required=False)
-    specifications = ProductSpecificationCreateSerializer(many=True, required=False)
     nav_items = ProductNavItemCreateSerializer(many=True, required=False)
     content_blocks = ProductContentBlockCreateSerializer(many=True, required=False)
     spec_models = ProductSpecModelCreateSerializer(many=True, required=False)
@@ -610,11 +580,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "short_description",
             "description",
             "highlights",
-            "applications",
-            "technical_overview",
-            "model_number",
-            "brand",
-            "warranty",
             "datasheet_url",
             "brochure_url",
             "demo_video_url",
@@ -631,15 +596,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "hero_catalog_label",
             "cart_href",
             "spec_download_href",
-            "meta_title",
-            "meta_description",
-            "is_featured",
-            "status",
-            "published_at",
             "categories",
             "media",
-            "features",
-            "specifications",
             "nav_items",
             "content_blocks",
             "spec_models",
@@ -649,8 +607,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         categories = validated_data.pop("categories", [])
         media_list = validated_data.pop("media", [])
-        feature_list = validated_data.pop("features", [])
-        specification_list = validated_data.pop("specifications", [])
         nav_item_list = validated_data.pop("nav_items", [])
         content_block_list = validated_data.pop("content_blocks", [])
         spec_model_list = validated_data.pop("spec_models", [])
@@ -662,12 +618,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         for media_data in media_list:
             ProductMedia.objects.create(product=product, **media_data)
-
-        for feature_data in feature_list:
-            ProductFeature.objects.create(product=product, **feature_data)
-
-        for specification_data in specification_list:
-            ProductSpecification.objects.create(product=product, **specification_data)
 
         for nav_item_data in nav_item_list:
             ProductNavItem.objects.create(product=product, **nav_item_data)

@@ -38,15 +38,6 @@ class Category(AuditableModel):
 
 
 class Product(AuditableModel):
-    STATUS_DRAFT = "draft"
-    STATUS_PUBLISHED = "published"
-    STATUS_ARCHIVED = "archived"
-    STATUS_CHOICES = [
-        (STATUS_DRAFT, "Draft"),
-        (STATUS_PUBLISHED, "Published"),
-        (STATUS_ARCHIVED, "Archived"),
-    ]
-
     title = models.CharField(max_length=220, help_text="Public product name.")
     slug = models.SlugField(max_length=240, unique=True, help_text="Used in product detail URL.")
     categories = models.ManyToManyField(
@@ -58,11 +49,6 @@ class Product(AuditableModel):
     short_description = models.TextField(blank=True, help_text="Fallback for summaryHtml.")
     description = models.TextField(blank=True, default="", help_text="Full description content.")
     highlights = models.TextField(blank=True, help_text="Fallback for highlightHtml.")
-    applications = models.TextField(blank=True, help_text="Legacy moarefi content.")
-    technical_overview = models.TextField(blank=True, help_text="Legacy moshakhasat content.")
-    model_number = models.CharField(max_length=120, blank=True, help_text="Internal model number.")
-    brand = models.CharField(max_length=120, blank=True, help_text="Brand/manufacturer.")
-    warranty = models.CharField(max_length=120, blank=True, help_text="Warranty label.")
     datasheet_url = models.FileField(
         upload_to="products/docs/",
         blank=True,
@@ -113,25 +99,11 @@ class Product(AuditableModel):
         blank=True,
         help_text="Primary spec download file.",
     )
-    meta_title = models.CharField(max_length=200, blank=True, help_text="SEO title.")
-    meta_description = models.TextField(blank=True, help_text="SEO description.")
-    is_featured = models.BooleanField(default=False, help_text="Highlights product in lists.")
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_DRAFT,
-    )
-    published_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Controls ordering and publish time.",
-    )
 
     class Meta:
-        ordering = ["-published_at", "-created_at"]
+        ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["slug"]),
-            models.Index(fields=["status", "published_at"]),
         ]
 
     def __str__(self) -> str:
@@ -202,41 +174,6 @@ class ProductMedia(AuditableModel):
 
     def __str__(self) -> str:
         return f"{self.product.title} - {self.media_type}"
-
-
-class ProductFeature(AuditableModel):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="features",
-    )
-    title = models.CharField(max_length=200, help_text="Feature title.")
-    body = models.TextField(blank=True, help_text="Feature body text.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.product.title} - {self.title}"
-
-
-class ProductSpecification(AuditableModel):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="specifications",
-    )
-    name = models.CharField(max_length=200, help_text="Specification name.")
-    value = models.CharField(max_length=300, help_text="Specification value.")
-    unit = models.CharField(max_length=50, blank=True, help_text="Optional unit.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.product.title} - {self.name}"
 
 
 class ProductNavItem(AuditableModel):

@@ -7,12 +7,10 @@ from .models import (
     ProductContentBlock,
     ProductContentBlockItem,
     ProductFaqItem,
-    ProductFeature,
     ProductMedia,
     ProductNavItem,
     ProductSpecItem,
     ProductSpecModel,
-    ProductSpecification,
     RootCategory,
 )
 
@@ -37,20 +35,6 @@ class ProductMediaInline(admin.TabularInline):
     model = ProductMedia
     extra = 0
     fields = ("media_type", "role", "title", "image", "file", "alt_text", "is_primary", "sort_order")
-    ordering = ("sort_order", "id")
-
-
-class ProductFeatureInline(admin.TabularInline):
-    model = ProductFeature
-    extra = 0
-    fields = ("title", "body", "sort_order")
-    ordering = ("sort_order", "id")
-
-
-class ProductSpecificationInline(admin.TabularInline):
-    model = ProductSpecification
-    extra = 0
-    fields = ("name", "value", "unit", "sort_order")
     ordering = ("sort_order", "id")
 
 
@@ -86,14 +70,11 @@ class ProductFaqItemInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "status",
-        "is_featured",
         "price",
-        "published_at",
         "created_at",
         "updated_at",
     )
-    list_filter = ("status", "is_featured", "categories", "created_at", "published_at")
+    list_filter = ("categories", "created_at")
     search_fields = (
         "title",
         "slug",
@@ -101,21 +82,16 @@ class ProductAdmin(admin.ModelAdmin):
         "description",
         "highlight",
         "hero_title",
-        "model_number",
-        "brand",
     )
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("categories",)
     inlines = (
         ProductMediaInline,
-        ProductFeatureInline,
-        ProductSpecificationInline,
         ProductNavItemInline,
         ProductContentBlockInline,
         ProductSpecModelInline,
         ProductFaqItemInline,
     )
-    date_hierarchy = "published_at"
 
 
 @admin.register(ProductMedia)
@@ -123,20 +99,6 @@ class ProductMediaAdmin(admin.ModelAdmin):
     list_display = ("product", "media_type", "role", "title", "is_primary", "sort_order")
     list_filter = ("media_type", "role", "is_primary")
     search_fields = ("title", "alt_text", "product__title")
-    ordering = ("product", "sort_order", "id")
-
-
-@admin.register(ProductFeature)
-class ProductFeatureAdmin(admin.ModelAdmin):
-    list_display = ("product", "title", "sort_order", "created_at", "updated_at")
-    search_fields = ("title", "body", "product__title")
-    ordering = ("product", "sort_order", "id")
-
-
-@admin.register(ProductSpecification)
-class ProductSpecificationAdmin(admin.ModelAdmin):
-    list_display = ("product", "name", "value", "unit", "sort_order")
-    search_fields = ("name", "value", "unit", "product__title")
     ordering = ("product", "sort_order", "id")
 
 

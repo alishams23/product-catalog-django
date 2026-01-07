@@ -45,60 +45,25 @@ class Product(AuditableModel):
         Category,
         related_name="products",
         blank=True,
-        help_text="First category is used for category/categoryHref in the API.",
+        help_text="Product categories.",
     )
-    short_description = models.TextField(blank=True, help_text="Fallback for summaryHtml.")
-    description = models.TextField(blank=True, default="", help_text="Full description content.")
-    highlights = models.TextField(blank=True, help_text="Fallback for highlightHtml.")
-    datasheet_url = models.FileField(
-        upload_to="products/docs/",
+    short_description = models.TextField(blank=True, help_text="Short summary.")
+    description = models.TextField(
         blank=True,
-        help_text="Fallback for specDownloadHref.",
+        default="",
+        help_text="Quill rich text content.",
     )
-    brochure_url = models.FileField(
-        upload_to="products/docs/",
-        blank=True,
-        help_text="Fallback for heroCatalogHref.",
-    )
-    demo_video_url = models.FileField(
-        upload_to="products/videos/",
-        blank=True,
-        help_text="Fallback for heroVideo.",
-    )
-    price = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
+    hero_image = models.ImageField(
+        upload_to="products/hero/",
         null=True,
         blank=True,
-        help_text="Displayed price.",
+        help_text="Hero image (optional).",
     )
-    highlight = models.CharField(max_length=240, blank=True, help_text="Short highlight text.")
-    highlight_html = models.TextField(blank=True, help_text="Rich highlight content.")
-    summary_html = models.TextField(blank=True, help_text="Rich summary content.")
-    hero_title = models.CharField(max_length=220, blank=True, help_text="Hero title text.")
-    hero_tagline = models.CharField(max_length=240, blank=True, help_text="Hero tagline text.")
-    hero_english = models.CharField(max_length=240, blank=True, help_text="Hero English text.")
-    hero_alt = models.CharField(max_length=200, blank=True, help_text="Hero image alt text.")
-    hero_video_url = models.FileField(
-        upload_to="products/videos/",
+    hero_video = models.FileField(
+        upload_to="products/hero/",
+        null=True,
         blank=True,
-        help_text="Hero video file.",
-    )
-    hero_catalog_href = models.FileField(
-        upload_to="products/docs/",
-        blank=True,
-        help_text="Hero catalog PDF.",
-    )
-    hero_catalog_label = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text="Label for the hero catalog link.",
-    )
-    cart_href = models.URLField(blank=True, help_text="Add-to-cart URL.")
-    spec_download_href = models.FileField(
-        upload_to="products/docs/",
-        blank=True,
-        help_text="Primary spec download file.",
+        help_text="Hero video (optional).",
     )
 
     class Meta:
@@ -111,216 +76,24 @@ class Product(AuditableModel):
         return self.title
 
 
-class ProductMedia(AuditableModel):
-    TYPE_IMAGE = "image"
-    TYPE_VIDEO = "video"
-    TYPE_DOCUMENT = "document"
-    ROLE_HERO = "hero"
-    ROLE_GALLERY = "gallery"
-    ROLE_DOCUMENT = "document"
-    TYPE_CHOICES = [
-        (TYPE_IMAGE, "Image"),
-        (TYPE_VIDEO, "Video"),
-        (TYPE_DOCUMENT, "Document"),
-    ]
-    ROLE_CHOICES = [
-        (ROLE_HERO, "Hero"),
-        (ROLE_GALLERY, "Gallery"),
-        (ROLE_DOCUMENT, "Document"),
-    ]
-
+class ProductGalleryImage(AuditableModel):
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name="media",
+        related_name="gallery_images",
     )
-    media_type = models.CharField(
-        max_length=20,
-        choices=TYPE_CHOICES,
-        default=TYPE_IMAGE,
-        help_text="Image, video, or document.",
-    )
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        blank=True,
-        help_text="Hero vs gallery vs document.",
-    )
-    title = models.CharField(max_length=200, blank=True, help_text="Optional display title.")
     image = models.ImageField(
-        upload_to="products/media/images/",
-        null=True,
-        blank=True,
-        help_text="Required when media_type=image.",
+        upload_to="products/gallery/",
+        help_text="Gallery image.",
     )
-    file = models.FileField(
-        upload_to="products/media/files/",
-        null=True,
-        blank=True,
-        help_text="Required when media_type=video/document.",
-    )
-    alt_text = models.CharField(max_length=200, blank=True, help_text="Alt text for image/video.")
-    is_primary = models.BooleanField(
-        default=False,
-        help_text="Used for list thumbnail when media_type=image.",
-    )
+    alt_text = models.CharField(max_length=200, blank=True, help_text="Alt text.")
     sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
 
     class Meta:
         ordering = ["sort_order", "id"]
         indexes = [
-            models.Index(fields=["product", "media_type"]),
-            models.Index(fields=["product", "role"]),
+            models.Index(fields=["product"]),
         ]
 
     def __str__(self) -> str:
-        return f"{self.product.title} - {self.media_type}"
-
-
-class ProductNavItem(AuditableModel):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="nav_items",
-    )
-    anchor_id = models.CharField(
-        max_length=120,
-        blank=True,
-        help_text="Anchor id used by navItems.",
-    )
-    label = models.CharField(max_length=120, help_text="Visible nav label.")
-    href = models.URLField(blank=True, help_text="Optional anchor href like #intro.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.product.title} - {self.label}"
-
-
-class ProductContentBlock(AuditableModel):
-    SECTION_MOAREFI = "moarefi"
-    SECTION_MOSHAKHASAT = "moshakhasat"
-    SECTION_VIDEO = "video"
-    SECTION_CHOICES = [
-        (SECTION_MOAREFI, "Moarefi"),
-        (SECTION_MOSHAKHASAT, "Moshakhasat"),
-        (SECTION_VIDEO, "Video"),
-    ]
-    TYPE_HEADING = "heading"
-    TYPE_PARAGRAPH = "paragraph"
-    TYPE_LIST = "list"
-    TYPE_IMAGE = "image"
-    TYPE_VIDEO = "video"
-    TYPE_CHOICES = [
-        (TYPE_HEADING, "Heading"),
-        (TYPE_PARAGRAPH, "Paragraph"),
-        (TYPE_LIST, "List"),
-        (TYPE_IMAGE, "Image"),
-        (TYPE_VIDEO, "Video"),
-    ]
-
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="content_blocks",
-    )
-    section = models.CharField(
-        max_length=20,
-        choices=SECTION_CHOICES,
-        help_text="Which section this block belongs to.",
-    )
-    block_type = models.CharField(
-        max_length=20,
-        choices=TYPE_CHOICES,
-        help_text="Rendered block type.",
-    )
-    title = models.CharField(max_length=200, blank=True, help_text="Used by heading blocks.")
-    body = models.TextField(blank=True, help_text="Paragraph or raw text content.")
-    media = models.ForeignKey(
-        ProductMedia,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="content_blocks",
-        help_text="Pick media for image/video blocks.",
-    )
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-        indexes = [
-            models.Index(fields=["product", "section"]),
-        ]
-
-    def __str__(self) -> str:
-        return f"{self.product.title} - {self.section} - {self.block_type}"
-
-
-class ProductContentBlockItem(AuditableModel):
-    block = models.ForeignKey(
-        ProductContentBlock,
-        on_delete=models.CASCADE,
-        related_name="items",
-    )
-    label = models.CharField(max_length=200, blank=True, help_text="List item label.")
-    value = models.CharField(max_length=300, blank=True, help_text="List item value.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.block_id} - {self.label or self.value}"
-
-
-class ProductSpecModel(AuditableModel):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="spec_models",
-    )
-    title = models.CharField(max_length=200, help_text="Spec model title.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.product.title} - {self.title}"
-
-
-class ProductSpecItem(AuditableModel):
-    spec_model = models.ForeignKey(
-        ProductSpecModel,
-        on_delete=models.CASCADE,
-        related_name="spec_items",
-    )
-    name = models.CharField(max_length=200, help_text="Spec name.")
-    value = models.CharField(max_length=300, help_text="Spec value.")
-    unit = models.CharField(max_length=50, blank=True, help_text="Optional unit.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.spec_model.title} - {self.name}"
-
-
-class ProductFaqItem(AuditableModel):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="faq_items",
-    )
-    question = models.CharField(max_length=240, help_text="FAQ question.")
-    answer_html = models.TextField(blank=True, help_text="FAQ answer HTML/text.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
-
-    class Meta:
-        ordering = ["sort_order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.product.title} - {self.question}"
+        return f"{self.product.title} - {self.id}"

@@ -30,7 +30,8 @@ INSTALLED_APPS = [
     "common",
     "users",
     "blog",
-    "product"
+    "product",
+    "contact",
 ]
 
 MIDDLEWARE = [

@@ -25,7 +25,19 @@ class CategorySerializer(serializers.ModelSerializer):
         root = obj.root_category
         if not root:
             return None
-        return {"id": root.id, "name": root.name, "slug": root.slug}
+        image = root.image.url if root.image else None
+        return {
+            "id": root.id,
+            "name": root.name,
+            "slug": root.slug,
+            "image": self._build_absolute_url(image),
+        }
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
 
 
 class CategoryListSerializer(serializers.ModelSerializer):
@@ -69,17 +81,42 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
 
 
 class RootCategorySerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = RootCategory
-        fields = ("id", "name", "slug")
+        fields = ("id", "name", "slug", "image")
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        return self._build_absolute_url(obj.image.url)
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
 
 
 class RootCategoryListSerializer(serializers.ModelSerializer):
     categories = CategorySerializer(many=True, read_only=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = RootCategory
-        fields = ("id", "name", "slug", "categories")
+        fields = ("id", "name", "slug", "image", "categories")
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        return self._build_absolute_url(obj.image.url)
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
 
 
 class ProductMediaSerializer(serializers.ModelSerializer):

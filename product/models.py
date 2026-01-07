@@ -6,6 +6,7 @@ from common.models import AuditableModel
 class RootCategory(AuditableModel):
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True)
+    image = models.ImageField(upload_to="products/root-categories/", null=True, blank=True)
 
     class Meta:
         ordering = ["name"]

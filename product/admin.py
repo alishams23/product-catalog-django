@@ -4,6 +4,7 @@ from .forms import CategoryAdminForm, ProductAdminForm
 from .models import (
     Category,
     Product,
+    ProductFaqItem,
     ProductGalleryImage,
     RootCategory,
 )
@@ -32,6 +33,13 @@ class ProductGalleryImageInline(admin.TabularInline):
     ordering = ("sort_order", "id")
 
 
+class ProductFaqItemInline(admin.TabularInline):
+    model = ProductFaqItem
+    extra = 0
+    fields = ("question", "answer", "sort_order")
+    ordering = ("sort_order", "id")
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
@@ -51,6 +59,7 @@ class ProductAdmin(admin.ModelAdmin):
     filter_horizontal = ("categories",)
     inlines = (
         ProductGalleryImageInline,
+        ProductFaqItemInline,
     )
 
 
@@ -58,4 +67,11 @@ class ProductAdmin(admin.ModelAdmin):
 class ProductGalleryImageAdmin(admin.ModelAdmin):
     list_display = ("product", "alt_text", "sort_order")
     search_fields = ("alt_text", "product__title")
+    ordering = ("product", "sort_order", "id")
+
+
+@admin.register(ProductFaqItem)
+class ProductFaqItemAdmin(admin.ModelAdmin):
+    list_display = ("product", "question", "sort_order")
+    search_fields = ("question", "answer", "product__title")
     ordering = ("product", "sort_order", "id")

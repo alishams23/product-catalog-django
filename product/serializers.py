@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import (
     Category,
     Product,
+    ProductFaqItem,
     ProductGalleryImage,
     RootCategory,
 )
@@ -138,6 +139,12 @@ class ProductGalleryImageCreateSerializer(serializers.ModelSerializer):
         fields = ("image", "alt_text", "sort_order")
 
 
+class ProductFaqItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductFaqItem
+        fields = ("question", "answer", "sort_order")
+
+
 class ProductListSerializer(serializers.ModelSerializer):
     categories = CategorySerializer(many=True, read_only=True)
     hero_image = serializers.SerializerMethodField()
@@ -170,6 +177,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     hero_image = serializers.SerializerMethodField()
     hero_video = serializers.SerializerMethodField()
     gallery_images = ProductGalleryImageSerializer(many=True, read_only=True)
+    faq_items = ProductFaqItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -183,6 +191,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "hero_image",
             "hero_video",
             "gallery_images",
+            "faq_items",
         )
 
     def get_hero_image(self, obj):
@@ -209,6 +218,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         required=False,
     )
     gallery_images = ProductGalleryImageCreateSerializer(many=True, required=False)
+    faq_items = ProductFaqItemSerializer(many=True, required=False)
 
     class Meta:
         model = Product
@@ -221,11 +231,13 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "hero_video",
             "categories",
             "gallery_images",
+            "faq_items",
         )
 
     def create(self, validated_data):
         categories = validated_data.pop("categories", [])
         gallery_images = validated_data.pop("gallery_images", [])
+        faq_items = validated_data.pop("faq_items", [])
 
         product = Product.objects.create(**validated_data)
         if categories:
@@ -233,5 +245,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         for image_data in gallery_images:
             ProductGalleryImage.objects.create(product=product, **image_data)
+
+        for faq_data in faq_items:
+            ProductFaqItem.objects.create(product=product, **faq_data)
 
         return product

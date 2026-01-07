@@ -97,3 +97,20 @@ class ProductGalleryImage(AuditableModel):
 
     def __str__(self) -> str:
         return f"{self.product.title} - {self.id}"
+
+
+class ProductFaqItem(AuditableModel):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="faq_items",
+    )
+    question = models.CharField(max_length=240, help_text="FAQ question.")
+    answer = models.TextField(blank=True, help_text="FAQ answer text/HTML.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self) -> str:
+        return f"{self.product.title} - {self.question}"

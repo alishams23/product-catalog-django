@@ -42,7 +42,6 @@ class ProductListAPIView(generics.ListAPIView):
     def get_queryset(self):
         return (
             Product.objects.all()
-            .prefetch_related("categories", "media")
             .order_by("-created_at")
             .distinct()
         )
@@ -57,15 +56,6 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
     def get_queryset(self):
         return (
             Product.objects.all()
-            .prefetch_related(
-                "categories",
-                "media",
-                "nav_items",
-                "content_blocks__items",
-                "content_blocks__media",
-                "spec_models__spec_items",
-                "faq_items",
-            )
             .distinct()
         )
 

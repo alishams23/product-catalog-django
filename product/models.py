@@ -114,3 +114,21 @@ class ProductFaqItem(AuditableModel):
 
     def __str__(self) -> str:
         return f"{self.product.title} - {self.question}"
+
+
+class ProductSpecItem(AuditableModel):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="spec_items",
+    )
+    variant_name = models.CharField(max_length=120, help_text="Column title (e.g. model name).")
+    label = models.CharField(max_length=200, help_text="Row label.")
+    value = models.CharField(max_length=300, blank=True, help_text="Cell value.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self) -> str:
+        return f"{self.product.title} - {self.variant_name} - {self.label}"

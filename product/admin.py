@@ -6,6 +6,7 @@ from .models import (
     Product,
     ProductFaqItem,
     ProductGalleryImage,
+    ProductSpecItem,
     RootCategory,
 )
 
@@ -40,6 +41,13 @@ class ProductFaqItemInline(admin.TabularInline):
     ordering = ("sort_order", "id")
 
 
+class ProductSpecItemInline(admin.TabularInline):
+    model = ProductSpecItem
+    extra = 0
+    fields = ("variant_name", "label", "value", "sort_order")
+    ordering = ("sort_order", "id")
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
@@ -60,6 +68,7 @@ class ProductAdmin(admin.ModelAdmin):
     inlines = (
         ProductGalleryImageInline,
         ProductFaqItemInline,
+        ProductSpecItemInline,
     )
 
 
@@ -75,3 +84,10 @@ class ProductFaqItemAdmin(admin.ModelAdmin):
     list_display = ("product", "question", "sort_order")
     search_fields = ("question", "answer", "product__title")
     ordering = ("product", "sort_order", "id")
+
+
+@admin.register(ProductSpecItem)
+class ProductSpecItemAdmin(admin.ModelAdmin):
+    list_display = ("product", "variant_name", "label", "value", "sort_order")
+    search_fields = ("variant_name", "label", "value", "product__title")
+    ordering = ("product", "variant_name", "sort_order", "id")

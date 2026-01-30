@@ -6,6 +6,7 @@ from .models import (
     Product,
     ProductFaqItem,
     ProductGalleryImage,
+    ProductVideo,
     ProductSpecItem,
     RootCategory,
 )
@@ -41,6 +42,13 @@ class ProductFaqItemInline(admin.TabularInline):
     ordering = ("sort_order", "id")
 
 
+class ProductVideoInline(admin.TabularInline):
+    model = ProductVideo
+    extra = 0
+    fields = ("video", "title", "sort_order")
+    ordering = ("sort_order", "id")
+
+
 class ProductSpecItemInline(admin.TabularInline):
     model = ProductSpecItem
     extra = 0
@@ -64,9 +72,10 @@ class ProductAdmin(admin.ModelAdmin):
         "description",
     )
     prepopulated_fields = {"slug": ("title",)}
-    filter_horizontal = ("categories",)
+    filter_horizontal = ("categories", "related_products")
     inlines = (
         ProductGalleryImageInline,
+        ProductVideoInline,
         ProductFaqItemInline,
         ProductSpecItemInline,
     )
@@ -83,6 +92,13 @@ class ProductGalleryImageAdmin(admin.ModelAdmin):
 class ProductFaqItemAdmin(admin.ModelAdmin):
     list_display = ("product", "question", "sort_order")
     search_fields = ("question", "answer", "product__title")
+    ordering = ("product", "sort_order", "id")
+
+
+@admin.register(ProductVideo)
+class ProductVideoAdmin(admin.ModelAdmin):
+    list_display = ("product", "title", "sort_order")
+    search_fields = ("title", "product__title")
     ordering = ("product", "sort_order", "id")
 
 

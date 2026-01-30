@@ -65,6 +65,13 @@ class Product(AuditableModel):
         blank=True,
         help_text="Hero video (optional).",
     )
+    related_products = models.ManyToManyField(
+        "self",
+        blank=True,
+        symmetrical=False,
+        related_name="related_to",
+        help_text="Other products to show as related.",
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -97,6 +104,30 @@ class ProductGalleryImage(AuditableModel):
 
     def __str__(self) -> str:
         return f"{self.product.title} - {self.id}"
+
+
+class ProductVideo(AuditableModel):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="videos",
+    )
+    video = models.FileField(
+        upload_to="products/videos/",
+        help_text="Product video file.",
+    )
+    title = models.CharField(max_length=200, blank=True, help_text="Optional video title.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Controls ordering.")
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        indexes = [
+            models.Index(fields=["product"]),
+        ]
+
+    def __str__(self) -> str:
+        label = self.title or f"Video {self.id}"
+        return f"{self.product.title} - {label}"
 
 
 class ProductFaqItem(AuditableModel):

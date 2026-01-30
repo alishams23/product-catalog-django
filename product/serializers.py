@@ -5,6 +5,7 @@ from .models import (
     Product,
     ProductFaqItem,
     ProductGalleryImage,
+    ProductVideo,
     ProductSpecItem,
     RootCategory,
 )
@@ -140,6 +141,31 @@ class ProductGalleryImageCreateSerializer(serializers.ModelSerializer):
         fields = ("image", "alt_text", "sort_order")
 
 
+class ProductVideoSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductVideo
+        fields = ("id", "url", "title", "sort_order")
+
+    def get_url(self, obj):
+        if not obj.video:
+            return None
+        return self._build_absolute_url(obj.video.url)
+
+    def _build_absolute_url(self, path):
+        request = self.context.get("request")
+        if request and path:
+            return request.build_absolute_uri(path)
+        return path
+
+
+class ProductVideoCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductVideo
+        fields = ("video", "title", "sort_order")
+
+
 class ProductFaqItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductFaqItem
@@ -184,8 +210,10 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     hero_image = serializers.SerializerMethodField()
     hero_video = serializers.SerializerMethodField()
     gallery_images = ProductGalleryImageSerializer(many=True, read_only=True)
+    videos = ProductVideoSerializer(many=True, read_only=True)
     faq_items = ProductFaqItemSerializer(many=True, read_only=True)
     spec_table = serializers.SerializerMethodField()
+    related_products = ProductListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -199,8 +227,10 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "hero_image",
             "hero_video",
             "gallery_images",
+            "videos",
             "faq_items",
             "spec_table",
+            "related_products",
         )
 
     def get_hero_image(self, obj):
@@ -250,8 +280,14 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         required=False,
     )
     gallery_images = ProductGalleryImageCreateSerializer(many=True, required=False)
+    videos = ProductVideoCreateSerializer(many=True, required=False)
     faq_items = ProductFaqItemSerializer(many=True, required=False)
     spec_items = ProductSpecItemSerializer(many=True, required=False)
+    related_products = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(),
+        many=True,
+        required=False,
+    )
 
     class Meta:
         model = Product
@@ -264,22 +300,31 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "hero_video",
             "categories",
             "gallery_images",
+            "videos",
             "faq_items",
             "spec_items",
+            "related_products",
         )
 
     def create(self, validated_data):
         categories = validated_data.pop("categories", [])
         gallery_images = validated_data.pop("gallery_images", [])
+        videos = validated_data.pop("videos", [])
         faq_items = validated_data.pop("faq_items", [])
         spec_items = validated_data.pop("spec_items", [])
+        related_products = validated_data.pop("related_products", [])
 
         product = Product.objects.create(**validated_data)
         if categories:
             product.categories.set(categories)
+        if related_products:
+            product.related_products.set(related_products)
 
         for image_data in gallery_images:
             ProductGalleryImage.objects.create(product=product, **image_data)
+
+        for video_data in videos:
+            ProductVideo.objects.create(product=product, **video_data)
 
         for faq_data in faq_items:
             ProductFaqItem.objects.create(product=product, **faq_data)

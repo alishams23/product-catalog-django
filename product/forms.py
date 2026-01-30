@@ -19,4 +19,5 @@ class ProductAdminForm(forms.ModelForm):
         fields = "__all__"
         widgets = {
             "description": QuillWidget(attrs={"class": "quill-editor"}),
+            "full_description": QuillWidget(attrs={"class": "quill-editor"}),
         }

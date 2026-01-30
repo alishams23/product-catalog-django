@@ -53,6 +53,11 @@ class Product(AuditableModel):
         default="",
         help_text="Quill rich text content.",
     )
+    full_description = models.TextField(
+        blank=True,
+        default="",
+        help_text="Full Quill rich text content.",
+    )
     hero_image = models.ImageField(
         upload_to="products/hero/",
         null=True,
